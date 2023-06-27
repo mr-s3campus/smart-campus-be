@@ -3,8 +3,8 @@ import { makeDb, withTransaction } from "../database/middleware.js";
 import config from "../database/config.js";
 var router = express.Router();
 
-/* GET users listing. */
-router.get("/", async function (req, res, next) {
+/* GET test */
+router.get("/test", async function (req, res, next) {
   try {
     const db = await makeDb(config);
 
