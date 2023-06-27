@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import logger from "morgan";
 
 import usersRouter from "./routes/users.js";
+import { writeTimetable } from "./python/timetable/main.js";
 
 const app = express();
 app.use(cors());
@@ -20,5 +21,7 @@ app.use("/users", usersRouter);
 app.get("/test", (req, res) => {
   res.send("You did it! 🥳");
 });
+
+// writeTimetable()
 
 export const api = functions.https.onRequest(app);
