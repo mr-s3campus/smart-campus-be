@@ -6,7 +6,15 @@ export const writeTimetable = async function () {
   try {
     console.log("writing timetables...");
     // const spawn = require("child_process").spawn;
-    const ls = spawn("python3", ["python/timetable/main.py"]);
+    const ls = spawn("python3", [
+      "python/timetable/main.py",
+      // params
+      "2023-03-24",
+      "2022/2023",
+      "2035",
+      "1",
+      "796",
+    ]);
 
     let scriptOutput = "";
 
@@ -20,7 +28,6 @@ export const writeTimetable = async function () {
 
     ls.on("close", async (code) => {
       let data = JSON.parse(scriptOutput);
-
 
       const db = await makeDb(config);
 
