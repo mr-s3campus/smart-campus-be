@@ -4,14 +4,23 @@ import { spawn } from "child_process";
 
 export const writeTimetable = async function () {
   try {
-    console.log('writing timetables...')
+    console.log("writing timetables...");
     // const spawn = require("child_process").spawn;
     const ls = spawn("python3", ["python/timetable/main.py"]);
 
+    let scriptOutput = "";
+
     ls.stdout.on("data", async (scriptData) => {
-      let data = scriptData?.toString();
-      data = data?.replaceAll("'", '"');
-      data = JSON.parse(data);
+      scriptOutput = scriptOutput + scriptData;
+    });
+
+    ls.stderr.on("data", (data) => {
+      console.log(`stderr: ${data}`);
+    });
+
+    ls.on("close", async (code) => {
+      let data = JSON.parse(scriptOutput);
+
 
       const db = await makeDb(config);
 
@@ -32,20 +41,13 @@ export const writeTimetable = async function () {
         });
 
         await db.query(fullQuery, args).catch((err) => {
-            // FIX ME: pay attention to duplicates
-            console.log(err)
+          // FIX ME: pay attention to duplicates
+          console.log(err);
         });
       });
-    });
-
-    ls.stderr.on("data", (data) => {
-      console.log(`stderr: ${data}`);
-    });
-
-    ls.on("close", (code) => {
       console.log(`timetable child process exited with code ${code}`);
     });
   } catch (err) {
-    console.log(err)
+    console.log(err);
   }
 };

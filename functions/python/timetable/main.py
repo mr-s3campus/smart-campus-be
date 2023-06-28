@@ -1,4 +1,5 @@
 import buildTimetable
+import json as j
 
 def main():
     """Args:
@@ -11,7 +12,9 @@ def main():
     """
     result = buildTimetable.buildTimetable('2023-03-24','2022/2023','2035','1','796')
     # FIX ME: add params
-    print(result)
+    # print(type(result))
+    stringResult = j.dumps(result, ensure_ascii=False) # convert to string
+    print(stringResult)
     return result
 
 main()
