@@ -154,7 +154,7 @@ CREATE TABLE IF NOT EXISTS Lesson (
 CREATE TABLE IF NOT EXISTS News (
     id VARCHAR(36) PRIMARY KEY,
     title VARCHAR(128) NOT NULL,
-    publisheAt DATE NOT NULL,
+    publishedAt DATE NOT NULL,
     content TEXT,
     fullContent TEXT
 );
