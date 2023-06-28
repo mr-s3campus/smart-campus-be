@@ -7,6 +7,7 @@ import logger from "morgan";
 
 import usersRouter from "./routes/users.js";
 import { writeTimetable } from "./python/timetable/main.js";
+import { writeNews } from "./python/news/main.js";
 
 const app = express();
 app.use(cors());
@@ -23,5 +24,6 @@ app.get("/test", (req, res) => {
 });
 
 // writeTimetable()
+// writeNews()
 
 export const api = functions.https.onRequest(app);
