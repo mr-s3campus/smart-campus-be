@@ -158,3 +158,11 @@ CREATE TABLE IF NOT EXISTS News (
     content TEXT,
     fullContent TEXT
 );
+
+CREATE TABLE IF NOT EXISTS Announcement (
+    id VARCHAR(36) PRIMARY KEY,
+    title VARCHAR(128) NOT NULL,
+    publishedAt DATE NOT NULL,
+    content TEXT,
+    fullContent TEXT
+);

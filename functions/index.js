@@ -6,6 +6,8 @@ import cookieParser from "cookie-parser";
 import logger from "morgan";
 
 import usersRouter from "./routes/users.js";
+import timetableRouter from "./routes/timetable.js";
+import newsRouter from "./routes/news.js";
 
 const app = express();
 app.use(cors());
@@ -16,9 +18,11 @@ app.use(cookieParser());
 // app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/users", usersRouter);
+app.use("/timetable", timetableRouter);
+app.use("/news", newsRouter);
 
 app.get("/test", (req, res) => {
-  res.send("You did it! 🥳");
+  res.send("You did it!");
 });
 
 export const api = functions.https.onRequest(app);
