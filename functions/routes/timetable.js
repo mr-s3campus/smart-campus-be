@@ -4,15 +4,21 @@ import config from "../database/config.js";
 var router = express.Router();
 
 /* GET test */
-router.get("/", async function (req, res, next) {
+router.post("/", async function (req, res, next) {
   try {
     const db = await makeDb(config);
 
     await withTransaction(db, async () => {
-      let sql = "SELECT * FROM Lesson";
-      let results = await db.query(sql, []).catch((err) => {
-        throw err;
-      });
+      let sql =
+        "SELECT * FROM Lesson " +
+        "WHERE startTime > ? AND " +
+        "endTime < ? " +
+        " ORDER BY startTime ASC; ";
+      let results = await db
+        .query(sql, [req?.body?.startRange, req?.body?.endRange])
+        .catch((err) => {
+          throw err;
+        });
 
       res.status(200).send(results);
     });
