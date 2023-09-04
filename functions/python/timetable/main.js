@@ -47,10 +47,12 @@ export const writeTimetable = async function () {
           );
         });
 
-        await db.query(fullQuery, args).catch((err) => {
-          // FIX ME: pay attention to duplicates
-          console.log(err);
-        });
+        if (fullQuery?.length > 0) {
+          await db.query(fullQuery, args).catch((err) => {
+            // FIX ME: pay attention to duplicates
+            console.log(err);
+          });
+        }
       });
       console.log(`timetable child process exited with code ${code}`);
     });

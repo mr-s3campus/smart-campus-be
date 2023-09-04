@@ -47,7 +47,7 @@ def getNews(index: int):
         ]
 
         articles = [
-            {"title": i[0], "date": i[1], "content": i[2], "fullContent": i[3]}
+            {"title": i[0], "date": i[1], "content": i[2], "fullContent": i[3], "isAnnouncement": index}
             for i in zip(titles, dates, contents, fullContents)
         ]
 

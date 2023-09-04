@@ -54,11 +54,16 @@ export const writeNews = async function () {
       const db = await makeDb(config);
 
       await withTransaction(db, async () => {
-        let singleQuery = "INSERT INTO News VALUES (UUID(),?,?,?,?); ";
+        let singleQueryNews = "INSERT INTO News VALUES (UUID(),?,?,?,?); ";
+        let singleQueryAnnouncement =
+          "INSERT INTO Announcement VALUES (UUID(),?,?,?,?); ";
         let fullQuery = "";
         let args = [];
         data?.forEach((el) => {
-          fullQuery = fullQuery + singleQuery;
+          // isAnnouncement = 1 for announcements; = 0 for news
+          fullQuery =
+            fullQuery +
+            (el?.isAnnouncement ? singleQueryAnnouncement : singleQueryNews);
           args.push(
             el?.title,
             formatDate(el?.date),
@@ -67,11 +72,13 @@ export const writeNews = async function () {
           );
         });
 
-        await db.query(fullQuery, args).catch((err) => {
-          // FIX ME: pay attention to duplicates
-          // no errors because of UUID
-          console.log(err);
-        });
+        if (fullQuery?.length > 0) {
+          await db.query(fullQuery, args).catch((err) => {
+            // FIX ME: pay attention to duplicates
+            // no errors because of UUID
+            console.log(err);
+          });
+        }
       });
       console.log(`news child process exited with code ${code}`);
     });
