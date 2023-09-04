@@ -6,6 +6,8 @@ import cookieParser from "cookie-parser";
 import logger from "morgan";
 
 import usersRouter from "./routes/users.js";
+import { writeTimetable } from "./python/timetable/main.js";
+import { writeNews } from "./python/news/main.js";
 import timetableRouter from "./routes/timetable.js";
 import newsRouter from "./routes/news.js";
 
@@ -24,5 +26,8 @@ app.use("/news", newsRouter);
 app.get("/test", (req, res) => {
   res.send("You did it!");
 });
+
+// writeTimetable()
+// writeNews()
 
 export const api = functions.https.onRequest(app);
