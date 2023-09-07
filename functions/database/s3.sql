@@ -166,3 +166,19 @@ CREATE TABLE IF NOT EXISTS Announcement (
     content TEXT,
     fullContent TEXT
 );
+
+CREATE TABLE IF NOT EXISTS Door (
+    id VARCHAR(128) PRIMARY KEY,
+    title VARCHAR(64) NOT NULL
+    -- others...
+);
+
+CREATE TABLE IF NOT EXISTS DoorOpening (
+    userId VARCHAR(128) NOT NULL, -- REFERENCES User(id)
+    doorId VARCHAR(64) NOT NULL, -- REFERENCES Door(id)
+    createdAt TIMESTAMP NOT NULL,
+    otp VARCHAR(6) NOT NULL,
+    opened BOOLEAN NOT NULL,
+    openedAt TIMESTAMP,
+	PRIMARY KEY (doorId, userId, createdAt)
+);
