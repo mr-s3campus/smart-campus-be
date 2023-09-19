@@ -1,6 +1,8 @@
 import config from "../../database/config.js";
 import { makeDb, withTransaction } from "../../database/middleware.js";
 import { spawn } from "child_process";
+import moment from "moment/moment.js";
+const { createHash } = await import("node:crypto");
 
 const MONTHS = [
   "gen",
@@ -35,6 +37,7 @@ const formatDate = (date) => {
 
 export const writeNews = async function () {
   try {
+    console.log("writing news...");
     // const spawn = require("child_process").spawn;
     const ls = spawn("python3", ["python/news/main.py"]);
 
@@ -51,32 +54,49 @@ export const writeNews = async function () {
     ls.on("close", async (code) => {
       let data = JSON.parse(scriptOutput);
 
+      console.log('NEWS DATA LENGTH: ', data?.length)
+
       const db = await makeDb(config);
 
       await withTransaction(db, async () => {
-        let singleQueryNews = "INSERT INTO News VALUES (UUID(),?,?,?,?); ";
+        let singleQueryNews = "INSERT INTO News VALUES (?,?,?,?,?); ";
         let singleQueryAnnouncement =
-          "INSERT INTO Announcement VALUES (UUID(),?,?,?,?); ";
+          "INSERT INTO Announcement VALUES (?,?,?,?,?); ";
         let fullQuery = "";
         let args = [];
-        data?.forEach((el) => {
-          // isAnnouncement = 1 for announcements; = 0 for news
-          fullQuery =
-            fullQuery +
-            (el?.isAnnouncement ? singleQueryAnnouncement : singleQueryNews);
-          args.push(
-            el?.title,
-            formatDate(el?.date),
-            el?.content,
-            el?.fullContent
-          );
-        });
+        data
+          // ?.sort((a, b) =>
+          //   moment(formatDate(a?.date)).isAfter(moment(formatDate(b?.data)))
+          //     ? 1
+          //     : -1
+          // )
+          ?.forEach((el) => {
+            // isAnnouncement = 1 for announcements; = 0 for news
+            fullQuery =
+              fullQuery +
+              (el?.isAnnouncement ? singleQueryAnnouncement : singleQueryNews);
+            var id = createHash("md5")
+              .update(el?.title + formatDate(el?.date))
+              .digest("hex");
+            args.push(
+              id,
+              el?.title,
+              formatDate(el?.date),
+              el?.content,
+              el?.fullContent
+            );
+          });
 
         if (fullQuery?.length > 0) {
           await db.query(fullQuery, args).catch((err) => {
-            // FIX ME: pay attention to duplicates
             // no errors because of UUID
-            console.log(err);
+            if (err?.message?.split(":")[0] === "ER_DUP_ENTRY") {
+              // nothing
+              // FIX ME: what if there is a duplicate before of a non-duplicate?
+              // it makes the error and the following queries are not executed
+            } else {
+              console.log(err);
+            }
           });
         }
       });

@@ -4,7 +4,7 @@ import cors from "cors";
 import path from "path";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
-import bodyParser from "body-parser"
+import bodyParser from "body-parser";
 
 import usersRouter from "./routes/users.js";
 import { writeTimetable } from "./python/timetable/main.js";
@@ -31,7 +31,8 @@ app.get("/test", (req, res) => {
   res.send("You did it!");
 });
 
-// writeTimetable()
-// writeNews()
+// writeTimetable(new Date().toISOString().split("T")[0], "2023/2024", "1", "796");
+// writeTimetable("2023-09-19", "2023/2024", "1", "796");
+writeNews()
 
 export const api = functions.https.onRequest(app);
