@@ -3,12 +3,49 @@ import { makeDb, withTransaction } from "../database/middleware.js";
 import config from "../database/config.js";
 import QRCode from "qrcode";
 import { PassThrough } from "stream";
+import { getMessaging } from "firebase-admin/messaging";
 var router = express.Router();
 
 const generateOtp = () => {
   // 6 digits OTP
   return Math.floor(100000 + Math.random() * 900000);
 };
+
+const FCM_TOKEN =
+  "etGgGaJsRO6rqHmuGddH0L:APA91bG7ychh913fw-bdJo6tl_-4bDXXwFBgzbFWBKTyysYaZtM9aX6p-f-IAGjmY9MnKyi7RVic6k1eE3IZifg3RVxStXZLPkWAZVDwDD7opHa1xw9Mh8q3M5qAWLMQPRMgsKdWx2lK";
+
+const sendFCM = (token) => {
+  const message = {
+    data: {
+      body: "door opened from server successfully!",
+    },
+    token: token,
+  };
+  // Send a message to the device corresponding to the provided
+  // registration token.
+  getMessaging()
+    .send(message)
+    .then((response) => {
+      // Response is a message ID string.
+      console.log("Successfully sent message:", response);
+    })
+    .catch((error) => {
+      console.log("Error sending message:", error);
+    });
+};
+
+
+// /* GET */
+// router.get("/openDoor", async function (req, res, next) {
+//   try {
+//     console.log()
+//     sendFCM(FCM_TOKEN)
+//     res.status(200).send("ok")
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).send("internal error");
+//   }
+// });
 
 /* GET */
 router.get("/", async function (req, res, next) {
@@ -31,7 +68,7 @@ router.get("/", async function (req, res, next) {
         const qrStream = new PassThrough();
         const result = await QRCode.toFileStream(qrStream, content, {
           type: "png",
-          width: 200,
+          width: 512,
           errorCorrectionLevel: "H",
         });
 
@@ -70,6 +107,7 @@ router.post("/open", async function (req, res, next) {
         if (results.affectedRows === 0) {
           res.status(403).send();
         } else {
+          sendFCM(FCM_TOKEN)
           res.status(200).send("door " + doorId + " opened successfully!");
         }
       });
