@@ -14,6 +14,7 @@ import newsRouter from "./routes/news.js";
 import doorsRouter from "./routes/doors.js";
 
 import { initializeApp } from 'firebase-admin/app';
+import { verifyToken } from "./middleware/authentication.js";
 const firebaseApp = initializeApp();
 
 const app = express();
@@ -28,6 +29,8 @@ app.use(bodyParser.json());
 global.serverAddress = "http://10.0.2.2";
 global.app = app;
 
+console.log("ENVIRONMENT: ", process.env.FUNCTIONS_EMULATOR)
+
 app.use("/users", usersRouter);
 app.use("/timetable", timetableRouter);
 app.use("/news", newsRouter);
@@ -35,6 +38,20 @@ app.use("/doors", doorsRouter);
 
 app.get("/test", (req, res) => {
   res.send("You did it!");
+});
+
+/* GET */
+app.get("/auth", async function (req, res, next) {
+  try {
+    verifyToken(req, res, () => {
+      res
+        .status(200)
+        .send({ decodedUID: req.decodedUID, decodedEMAIL: req.decodedEMAIL });
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("internal error");
+  }
 });
 
 // writeTimetable(new Date().toISOString().split("T")[0], "2023/2024", "1", "796");

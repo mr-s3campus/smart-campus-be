@@ -4,6 +4,7 @@ import config from "../database/config.js";
 import QRCode from "qrcode";
 import { PassThrough } from "stream";
 import { getMessaging } from "firebase-admin/messaging";
+import { verifyToken } from "../middleware/authentication.js";
 var router = express.Router();
 
 const generateOtp = () => {
@@ -11,13 +12,11 @@ const generateOtp = () => {
   return Math.floor(100000 + Math.random() * 900000);
 };
 
-const FCM_TOKEN =
-  "etGgGaJsRO6rqHmuGddH0L:APA91bG7ychh913fw-bdJo6tl_-4bDXXwFBgzbFWBKTyysYaZtM9aX6p-f-IAGjmY9MnKyi7RVic6k1eE3IZifg3RVxStXZLPkWAZVDwDD7opHa1xw9Mh8q3M5qAWLMQPRMgsKdWx2lK";
-
-const sendFCM = (token) => {
+const sendFCM = (token, doorId) => {
   const message = {
     data: {
-      body: "door opened from server successfully!",
+      doorId: doorId,
+      body: "door " + doorId + " opened successfully!",
     },
     token: token,
   };
@@ -27,42 +26,25 @@ const sendFCM = (token) => {
     .send(message)
     .then((response) => {
       // Response is a message ID string.
-      console.log("Successfully sent message:", response);
+      // console.log("Successfully sent message:", response);
     })
     .catch((error) => {
       console.log("Error sending message:", error);
     });
 };
 
-
-// /* GET */
-// router.get("/openDoor", async function (req, res, next) {
-//   try {
-//     console.log()
-//     sendFCM(FCM_TOKEN)
-//     res.status(200).send("ok")
-//   } catch (err) {
-//     console.log(err);
-//     res.status(500).send("internal error");
-//   }
-// });
-
 /* GET */
 router.get("/", async function (req, res, next) {
   try {
     if (req?.query?.door) {
-      const userId = "user-id";
-      // FIX ME: verify user privileges
       const otp = generateOtp();
       const db = await makeDb(config);
       await withTransaction(db, async () => {
         let sql =
-          "INSERT INTO DoorOpening VALUES (?, ?, UTC_TIMESTAMP(), ?, false, null); ";
-        await db.query(sql, [userId, req?.query?.door, otp]).catch((err) => {
+          "INSERT INTO DoorOpening VALUES (null, ?, UTC_TIMESTAMP(), ?, false, null); ";
+        await db.query(sql, [req?.query?.door, otp]).catch((err) => {
           throw err;
         });
-
-        console.log("db ok - otp: ", otp);
 
         const content = otp.toString();
         const qrStream = new PassThrough();
@@ -75,7 +57,7 @@ router.get("/", async function (req, res, next) {
         qrStream.pipe(res);
       });
     } else {
-      res.status(404).send("door not found");
+      res.status(404).send("door not specified!");
     }
   } catch (err) {
     console.log(err);
@@ -86,34 +68,69 @@ router.get("/", async function (req, res, next) {
 /* GET */
 router.post("/open", async function (req, res, next) {
   try {
-    const userId = "user-id";
-    const { doorId, otp } = req.body;
-    if (doorId && otp) {
-      const db = await makeDb(config);
-      await withTransaction(db, async () => {
-        let sql =
-          "UPDATE DoorOpening SET opened = true, openedAt = UTC_TIMESTAMP() " +
-          "WHERE userId = ? " +
-          "AND doorId = ? " +
-          "AND otp = ? " +
-          "AND opened = false " +
-          "AND DATE_ADD(createdAt, INTERVAL '5' MINUTE) > UTC_TIMESTAMP();";
-        let results = await db
-          .query(sql, [userId, doorId, otp])
-          .catch((err) => {
-            throw err;
-          });
+    verifyToken(req, res, async () => {
+      const userId = req.decodedUID;
+      const { doorId, otp } = req.body;
+      if (doorId && otp) {
+        const db = await makeDb(config);
+        await withTransaction(db, async () => {
+          let sql =
+            "UPDATE DoorOpening SET opened = true, userId = ?, openedAt = UTC_TIMESTAMP() " +
+            "WHERE doorId = ? " +
+            "AND otp = ? " +
+            "AND opened = false " +
+            // FIX ME: AND userId HAS privilege
+            "AND DATE_ADD(createdAt, INTERVAL '5' MINUTE) > UTC_TIMESTAMP() ; " +
+            "SELECT pushToken FROM Door WHERE id = ? ; ";
+          let results = await db
+            .query(sql, [userId, doorId, otp, doorId])
+            .catch((err) => {
+              throw err;
+            });
 
-        if (results.affectedRows === 0) {
-          res.status(403).send();
-        } else {
-          sendFCM(FCM_TOKEN)
-          res.status(200).send("door " + doorId + " opened successfully!");
-        }
-      });
-    } else {
-      res.status(404).send("no data");
-    }
+          if (results[0].affectedRows === 0) {
+            res.status(403).send();
+          } else {
+            const pushToken = results[1][0].pushToken;
+            if (pushToken) {
+              sendFCM(pushToken, doorId);
+              res.status(200).send("door " + doorId + " opened successfully!");
+            } else {
+              res.status(500).send("can't contact the door!");
+            }
+          }
+        });
+      } else {
+        res.status(404).send("no data");
+      }
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("internal error");
+  }
+});
+
+/* GET */
+router.post("/register", async function (req, res, next) {
+  try {
+    verifyToken(req, res, async () => {
+      if (req.decodedEMAIL === "doors@doors.com") {
+        const { pushToken, doorId } = req.body;
+        const db = await makeDb(config);
+        await withTransaction(db, async () => {
+          let sql = "UPDATE Door SET pushToken = ? WHERE id = ? ;";
+          let results = await db
+            .query(sql, [pushToken, doorId])
+            .catch((err) => {
+              throw err;
+            });
+
+          res.status(200).send();
+        });
+      } else {
+        res.status(401).send("user not authorized");
+      }
+    });
   } catch (err) {
     console.log(err);
     res.status(500).send("internal error");

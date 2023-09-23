@@ -168,17 +168,18 @@ CREATE TABLE IF NOT EXISTS Announcement (
 );
 
 CREATE TABLE IF NOT EXISTS Door (
-    id VARCHAR(128) PRIMARY KEY,
-    title VARCHAR(64) NOT NULL
+    id VARCHAR(16) PRIMARY KEY,
+    title VARCHAR(64) NOT NULL,
+    pushToken VARCHAR(256)
     -- others...
 );
 
 CREATE TABLE IF NOT EXISTS DoorOpening (
-    userId VARCHAR(128) NOT NULL, -- REFERENCES User(id)
+    userId VARCHAR(128), -- REFERENCES User(id)
     doorId VARCHAR(64) NOT NULL, -- REFERENCES Door(id)
     createdAt TIMESTAMP NOT NULL,
     otp VARCHAR(6) NOT NULL,
     opened BOOLEAN NOT NULL,
     openedAt TIMESTAMP,
-	PRIMARY KEY (doorId, userId, createdAt)
+	PRIMARY KEY (doorId, createdAt)
 );
