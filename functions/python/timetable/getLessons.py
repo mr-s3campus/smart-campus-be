@@ -18,25 +18,31 @@ def getLessons(aa: str, cc: str, aci: str, codInd: str):
 
     example: getLessons('2022/2023','2035','1','796')"""
 
-    page = request(
-        method="get",
-        url=constants.CALENDAR_URL,
-        params={"aa": aa, "cc": cc, "aci": aci, "codInd": codInd},
-        timeout=3,
-    )
+    try:
 
-    # BeautifulSoup makes a python editable representation of a web page
-    soup = BeautifulSoup(page.content, "html.parser")
-    a = soup.findAll("script")
+        page = request(
+            method="get",
+            url=constants.CALENDAR_URL,
+            params={"aa": aa, "cc": cc, "aci": aci, "codInd": codInd},
+            timeout=3,
+        )
 
-    # eventsNumber within the calendar
-    eventsNumber = None
-    for i in range(len(a)):
-        if str(a[i]).find('var events = {"result"') != -1:
-            eventsNumber = i
+        # BeautifulSoup makes a python editable representation of a web page
+        soup = BeautifulSoup(page.content, "html.parser")
+        a = soup.findAll("script")
 
-    lessons = j.loads(
-        (str(str(a[eventsNumber].getText()).split("\n")[2]).split("= ")[1])[:-1]
-    )["result"]
+        # eventsNumber within the calendar
+        eventsNumber = None
+        for i in range(len(a)):
+            if str(a[i]).find('var events = {"result"') != -1:
+                eventsNumber = i
 
-    return lessons
+        lessons = j.loads(
+            (str(str(a[eventsNumber].getText()).split("\n")[2]).split("= ")[1])[:-1]
+        )["result"]
+
+        return lessons
+    except ConnectionError:
+        raise ConnectionError
+    except: 
+        raise Exception

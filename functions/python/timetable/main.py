@@ -10,11 +10,17 @@ def main(date: str, aa: str, cc: str, aci: str, codInd: str):
         aci (str): course year
         codInd (str): course address code
     """
-    result = buildTimetable.buildTimetable(date, aa, cc, aci, codInd)
-    # FIX ME: add params
-    # print(type(result))
-    stringResult = j.dumps(result, ensure_ascii=False) # convert to string
-    print(stringResult)
-    return result
+    try:
+        result = buildTimetable.buildTimetable(date, aa, cc, aci, codInd)
+        # FIX ME: add params
+        # print(type(result))
+        stringResult = j.dumps(result, ensure_ascii=False) # convert to string
+        print(stringResult)
+        return result
+    except ConnectionError:
+        return { "error": "Connection error" }
+    except:
+        return { "error": "Generic error" }
+    
 
 main(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5])

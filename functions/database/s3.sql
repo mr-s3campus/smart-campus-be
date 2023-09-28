@@ -143,12 +143,17 @@ CREATE TABLE IF NOT EXISTS GroupParticipant (
 );
 
 CREATE TABLE IF NOT EXISTS Lesson (
-    id VARCHAR(30) PRIMARY KEY,
+    lessonId VARCHAR(30) NOT NULL,
     title VARCHAR(128) NOT NULL,
     startTime DATETIME NOT NULL,
     endTime DATETIME NOT NULL,
     descAulaBreve VARCHAR(32),
-    oidAula INT
+    oidAula INT,
+    academicYear VARCHAR(10) NOT NULL,
+    courseCode VARCHAR(8) NOT NULL,
+    courseYear VARCHAR(2) NOT NULL,
+    courseAddressCode VARCHAR(8) NOT NULL,
+    PRIMARY KEY (title, startTime, courseYear, courseAddressCode)
 );
 
 CREATE TABLE IF NOT EXISTS News (

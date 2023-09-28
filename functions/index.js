@@ -13,8 +13,9 @@ import timetableRouter from "./routes/timetable.js";
 import newsRouter from "./routes/news.js";
 import doorsRouter from "./routes/doors.js";
 
-import { initializeApp } from 'firebase-admin/app';
+import { initializeApp } from "firebase-admin/app";
 import { verifyToken } from "./middleware/authentication.js";
+import { makeTimetables } from "./python/timetable/makeTimetables.js";
 const firebaseApp = initializeApp();
 
 const app = express();
@@ -29,7 +30,7 @@ app.use(bodyParser.json());
 global.serverAddress = "http://10.0.2.2";
 global.app = app;
 
-console.log("ENVIRONMENT: ", process.env.FUNCTIONS_EMULATOR)
+console.log("ENVIRONMENT: ", process.env.FUNCTIONS_EMULATOR);
 
 app.use("/users", usersRouter);
 app.use("/timetable", timetableRouter);
@@ -54,8 +55,10 @@ app.get("/auth", async function (req, res, next) {
   }
 });
 
-// writeTimetable(new Date().toISOString().split("T")[0], "2023/2024", "1", "796");
-// writeTimetable("2023-09-19", "2023/2024", "1", "796");
+makeTimetables();
+const day = 86400000;
+setInterval(() => makeTimetables(), 3 * day); // every 3 days
+
 // writeNews()
 
 export const api = functions.https.onRequest(app);

@@ -20,8 +20,14 @@ MONTHS = [
 
 # Lists that I will need to fix a bug which the timetable presents some mistakes regarding classes
 # These elements have been taken from University's website "Manifesto degli studi"
+
+# 796 -> CYBERSICUREZZA
+# 797 -> INTELLIGENZA ARTIFICIALE
+
+# 796
 LM2035_1_796_FirstPer_allowed = [
     "BIG DATA C.I. - TECNOLOGIE PER I BIG DATA (Modulo)",
+    "BIG DATA C.I. -  Mod. TECNOLOGIE PER I BIG DATA",
     "EMBEDDED SYSTEMS",
     "INTELLIGENZA ARTIFICIALE 1",
     "METODI DI ELABORAZIONE DEI SEGNALI",
@@ -30,6 +36,7 @@ LM2035_1_796_FirstPer_allowed = [
 ]
 LM2035_1_796_SecondPer_allowed = [
     "BIG DATA C.I. - ANALISI PER BIG DATA (Modulo)",
+    "BIG DATA C.I. -  Mod. ANALISI PER I BIG DATA",
     "CRITTOGRAFIA",
     "LINGUAGGI E TRADUTTORI",
     "TEORIA DELL'INFORMAZIONE E COMPRESSIONE DATI",
@@ -42,8 +49,10 @@ LM2035_2_796_FirstPer_allowed = [
 ]
 LM2035_2_796_SecondPer_allowed = []
 
+# 797
 LM2035_1_797_FirstPer_allowed = [
     "BIG DATA C.I. - TECNOLOGIE PER I BIG DATA (Modulo)",
+    "BIG DATA C.I. -  Mod. TECNOLOGIE PER I BIG DATA",
     "EMBEDDED SYSTEMS",
     "INTELLIGENZA ARTIFICIALE 1",
     "METODI DI ELABORAZIONE DEI SEGNALI",
@@ -52,6 +61,7 @@ LM2035_1_797_FirstPer_allowed = [
 ]
 LM2035_1_797_SecondPer_allowed = [
     "BIG DATA C.I. - ANALISI PER BIG DATA (Modulo)",
+    "BIG DATA C.I. -  Mod. ANALISI PER I BIG DATA",
     "LINGUAGGI E TRADUTTORI",
     "TEORIA DELL'INFORMAZIONE E COMPRESSIONE DATI",
     "VISIONE ARTIFICIALE",
