@@ -1,7 +1,9 @@
+import moment from "moment";
 import config from "../../database/config.js";
 import { makeDb, withTransaction } from "../../database/middleware.js";
 import { spawn } from "child_process";
 
+const DATETIME_FORMAT = "YYYY-MM-DD HH:mm"
 export const writeTimetable = async function (
   date,
   academicYear,
@@ -53,8 +55,8 @@ export const writeTimetable = async function (
           args.push(
             el?.id,
             el?.title,
-            el?.start,
-            el?.end,
+            moment(el?.start).format(DATETIME_FORMAT),
+            moment(el?.end).format(DATETIME_FORMAT),
             el?.descAulaBreve,
             el?.oidAula,
             academicYear,
