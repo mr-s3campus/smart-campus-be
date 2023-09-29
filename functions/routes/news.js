@@ -9,7 +9,9 @@ router.get("/", async function (req, res, next) {
     const db = await makeDb(config);
 
     await withTransaction(db, async () => {
-      let sql = "SELECT * FROM News; SELECT * FROM Announcement;";
+      let sql =
+        "SELECT * FROM News ORDER BY publishedAt DESC ;" +
+        "SELECT * FROM Announcement ORDER BY publishedAt DESC ;";
       let results = await db.query(sql, []).catch((err) => {
         throw err;
       });

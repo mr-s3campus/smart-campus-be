@@ -65,6 +65,7 @@ export const writeNews = async function () {
         let args = [];
         data
           ?.sort((a, b) =>
+            // FX ME: Deprecation warning: value provided is not in a recognized RFC2822 or ISO format. moment construction falls back to js Date(), which is not reliable across all browsers and versions.
             moment(formatDate(a?.date)).isAfter(moment(formatDate(b?.date)))
               ? -1
               : 1
