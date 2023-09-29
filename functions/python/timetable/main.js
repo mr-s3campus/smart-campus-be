@@ -70,11 +70,12 @@ export const writeTimetable = async function (
           await db.query(fullQuery, args).catch((err) => {
             if (err?.message?.split(":")[0] === "ER_DUP_ENTRY") {
               // do nothing
-              // FIX ME: what if there is a duplicate before of a non-duplicate?
+              // POSSIBLE ERROR: what if there is a duplicate before of a non-duplicate?
               // it makes the error and the following queries are not executed.
-              // Anyway, for the lessons it should never happen
+              // SOLUTION: it should never happen
               // that a duplicate is followed by non-duplicates
-              // because it's always the same data
+              // because it's always the same data (week plan),
+              // so or they are all duplicates or they are not
             } else {
               console.log(err);
             }

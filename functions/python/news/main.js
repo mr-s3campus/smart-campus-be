@@ -1,3 +1,4 @@
+import moment from "moment";
 import config from "../../database/config.js";
 import { makeDb, withTransaction } from "../../database/middleware.js";
 import { spawn } from "child_process";
@@ -63,11 +64,11 @@ export const writeNews = async function () {
         let fullQuery = "";
         let args = [];
         data
-          // ?.sort((a, b) =>
-          //   moment(formatDate(a?.date)).isAfter(moment(formatDate(b?.data)))
-          //     ? 1
-          //     : -1
-          // )
+          ?.sort((a, b) =>
+            moment(formatDate(a?.date)).isAfter(moment(formatDate(b?.date)))
+              ? -1
+              : 1
+          )
           ?.forEach((el) => {
             // isAnnouncement = 1 for announcements; = 0 for news
             fullQuery =
@@ -90,8 +91,12 @@ export const writeNews = async function () {
           await db.query(fullQuery, args).catch((err) => {
             if (err?.message?.split(":")[0] === "ER_DUP_ENTRY") {
               // do nothing
-              // FIX ME: what if there is a duplicate before of a non-duplicate?
-              // it makes the error and the following queries are not executed
+              // POSSIBLE ERROR: what if there is a duplicate before of a non-duplicate?
+              // it makes the error and the following queries are not executed.
+              // SOLUTION: this should never happen because I sort news by date, so if there is a duplicate
+              // then all the next queries should contain duplicates too,
+              // while the non-duplicates should be over it 
+              // and so they should be executed before the error is thrown
             } else {
               console.log(err);
             }
