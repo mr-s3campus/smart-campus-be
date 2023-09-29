@@ -1,7 +1,6 @@
 import config from "../../database/config.js";
 import { makeDb, withTransaction } from "../../database/middleware.js";
 import { spawn } from "child_process";
-import moment from "moment/moment.js";
 const { createHash } = await import("node:crypto");
 
 const MONTHS = [
@@ -37,8 +36,7 @@ const formatDate = (date) => {
 
 export const writeNews = async function () {
   try {
-    console.log("writing news...");
-    // const spawn = require("child_process").spawn;
+    // console.log("writing news...");
     const ls = spawn("python3", ["python/news/main.py"]);
 
     let scriptOutput = "";
@@ -54,14 +52,14 @@ export const writeNews = async function () {
     ls.on("close", async (code) => {
       let data = JSON.parse(scriptOutput);
 
-      console.log('NEWS DATA LENGTH: ', data?.length)
+      // console.log("NEWS DATA LENGTH: ", data?.length);
 
       const db = await makeDb(config);
 
       await withTransaction(db, async () => {
-        let singleQueryNews = "INSERT INTO News VALUES (?,?,?,?,?); ";
+        let singleQueryNews = "INSERT INTO News VALUES (?,?,?,?,?,?); ";
         let singleQueryAnnouncement =
-          "INSERT INTO Announcement VALUES (?,?,?,?,?); ";
+          "INSERT INTO Announcement VALUES (?,?,?,?,?,?); ";
         let fullQuery = "";
         let args = [];
         data
@@ -83,15 +81,15 @@ export const writeNews = async function () {
               el?.title,
               formatDate(el?.date),
               el?.content,
-              el?.fullContent
+              el?.fullContent,
+              el?.link
             );
           });
 
         if (fullQuery?.length > 0) {
           await db.query(fullQuery, args).catch((err) => {
-            // no errors because of UUID
             if (err?.message?.split(":")[0] === "ER_DUP_ENTRY") {
-              // nothing
+              // do nothing
               // FIX ME: what if there is a duplicate before of a non-duplicate?
               // it makes the error and the following queries are not executed
             } else {
@@ -100,7 +98,7 @@ export const writeNews = async function () {
           });
         }
       });
-      console.log(`news child process exited with code ${code}`);
+      // console.log(`news child process exited with code ${code}`);
     });
   } catch (err) {
     console.log(err);

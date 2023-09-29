@@ -55,10 +55,11 @@ app.get("/auth", async function (req, res, next) {
   }
 });
 
-makeTimetables();
 const day = 86400000;
+makeTimetables();
 setInterval(() => makeTimetables(), 3 * day); // every 3 days
 
-// writeNews()
+writeNews();
+setInterval(() => makeTimetables(), day / 2); // every 12 hours
 
 export const api = functions.https.onRequest(app);

@@ -161,7 +161,8 @@ CREATE TABLE IF NOT EXISTS News (
     title VARCHAR(128) NOT NULL,
     publishedAt DATE NOT NULL,
     content TEXT,
-    fullContent TEXT
+    fullContent TEXT,
+    link TEXT
 );
 
 CREATE TABLE IF NOT EXISTS Announcement (
@@ -169,7 +170,8 @@ CREATE TABLE IF NOT EXISTS Announcement (
     title VARCHAR(128) NOT NULL,
     publishedAt DATE NOT NULL,
     content TEXT,
-    fullContent TEXT
+    fullContent TEXT,
+    link TEXT
 );
 
 CREATE TABLE IF NOT EXISTS Door (

@@ -45,10 +45,14 @@ def getNews(index: int):
             getNewsText.getNewsText(i["href"])
             for i in section.findChildren(attrs={"href": True})[5::]
         ]
+        links = [
+            i["href"]
+            for i in section.findChildren(attrs={"href": True})[5::]
+        ]
 
         articles = [
-            {"title": i[0], "date": i[1], "content": i[2], "fullContent": i[3], "isAnnouncement": index}
-            for i in zip(titles, dates, contents, fullContents)
+            {"title": i[0], "date": i[1], "content": i[2], "fullContent": i[3], "link": i[4], "isAnnouncement": index}
+            for i in zip(titles, dates, contents, fullContents, links)
         ]
 
         # try:
