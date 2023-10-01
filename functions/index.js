@@ -6,16 +6,17 @@ import cookieParser from "cookie-parser";
 import logger from "morgan";
 import bodyParser from "body-parser";
 
-import usersRouter from "./routes/users.js";
-import { writeTimetable } from "./python/timetable/main.js";
-import { writeNews } from "./python/news/main.js";
+import usersRouter from "./routes/user.js";
 import timetableRouter from "./routes/timetable.js";
 import newsRouter from "./routes/news.js";
 import doorsRouter from "./routes/doors.js";
+import userRouter from "./routes/user.js";
 
 import { initializeApp } from "firebase-admin/app";
 import { verifyToken } from "./middleware/authentication.js";
 import { makeTimetables } from "./python/timetable/makeTimetables.js";
+import { writeNews } from "./python/news/main.js";
+
 const firebaseApp = initializeApp();
 
 const app = express();
@@ -36,6 +37,7 @@ app.use("/users", usersRouter);
 app.use("/timetable", timetableRouter);
 app.use("/news", newsRouter);
 app.use("/doors", doorsRouter);
+app.use("/user", verifyToken, userRouter);
 
 app.get("/test", (req, res) => {
   res.send("You did it!");
