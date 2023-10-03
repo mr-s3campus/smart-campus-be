@@ -79,11 +79,11 @@ router.post("/open", async function (req, res, next) {
             "WHERE doorId = ? " +
             "AND otp = ? " +
             "AND opened = false " +
-            // FIX ME: AND userId HAS privilege
+            "AND (SELECT permissionLevel FROM Door WHERE id = ? ) <= (SELECT userRole FROM S3User WHERE uid = ? ) = true " +
             "AND DATE_ADD(createdAt, INTERVAL '5' MINUTE) > UTC_TIMESTAMP() ; " +
             "SELECT pushToken FROM Door WHERE id = ? ; ";
           let results = await db
-            .query(sql, [userId, doorId, otp, doorId])
+            .query(sql, [userId, doorId, otp, doorId, userId, doorId])
             .catch((err) => {
               throw err;
             });

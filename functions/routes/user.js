@@ -33,7 +33,7 @@ router.post("/signup", async function (req, res, next) {
   try {
     const uid = req.decodedUID;
     const email = req.decodedEMAIL;
-    const userRole = 1; // FIX ME
+    const userRole = 3; // FIX ME
     const { firstname, surname } = req?.body;
     const db = await makeDb(config);
 

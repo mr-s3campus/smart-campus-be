@@ -66,7 +66,9 @@ export const writeNews = async function () {
         data
           ?.sort((a, b) =>
             // FX ME: Deprecation warning: value provided is not in a recognized RFC2822 or ISO format. moment construction falls back to js Date(), which is not reliable across all browsers and versions.
-            moment(formatDate(a?.date)).isAfter(moment(formatDate(b?.date)))
+            moment(formatDate(a?.date), "YYYY-MM-DD").isAfter(
+              moment(formatDate(b?.date), "YYYY-MM-DD")
+            )
               ? -1
               : 1
           )
@@ -96,7 +98,7 @@ export const writeNews = async function () {
               // it makes the error and the following queries are not executed.
               // SOLUTION: this should never happen because I sort news by date, so if there is a duplicate
               // then all the next queries should contain duplicates too,
-              // while the non-duplicates should be over it 
+              // while the non-duplicates should be over it
               // and so they should be executed before the error is thrown
             } else {
               console.log(err);

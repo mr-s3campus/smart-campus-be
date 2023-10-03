@@ -178,6 +178,7 @@ CREATE TABLE IF NOT EXISTS Announcement (
 CREATE TABLE IF NOT EXISTS Door (
     id VARCHAR(16) PRIMARY KEY,
     title VARCHAR(64) NOT NULL,
+    permissionLevel INT NOT NULL,
     building VARCHAR(128),
     pushToken VARCHAR(256)
     -- others...
@@ -194,8 +195,8 @@ CREATE TABLE IF NOT EXISTS DoorOpening (
 );
 
 -- populating
-INSERT INTO Door VALUES('U300', 'Uffici Professori', null, null);
-INSERT INTO Door VALUES('A320', 'A320', null, null);
-INSERT INTO Door VALUES('A310', 'A310', null, null);
-INSERT INTO Door VALUES('A220', 'A220', null, null);
-INSERT INTO Door VALUES('A210', 'A210', null, null);
+INSERT INTO Door VALUES('U300', 'Uffici Professori', 2, null, null);
+INSERT INTO Door VALUES('A320', 'A320', 1, null, null);
+INSERT INTO Door VALUES('A310', 'A310', 1,null, null);
+INSERT INTO Door VALUES('A220', 'A220', 1,null, null);
+INSERT INTO Door VALUES('A210', 'A210', 1,null, null);
