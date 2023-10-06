@@ -58,7 +58,7 @@ app.get("/auth", async function (req, res, next) {
 });
 
 const day = 86400000;
-// makeTimetables();
+makeTimetables();
 // setInterval(() => makeTimetables(), 3 * day); // every 3 days
 
 writeNews();
