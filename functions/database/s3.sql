@@ -1,162 +1,198 @@
 CREATE DATABASE s3_db;
 USE s3_db;
 
+
+
+-- USERS --
 CREATE TABLE IF NOT EXISTS S3User (
     uid VARCHAR(128) PRIMARY KEY,
     email VARCHAR(80) UNIQUE NOT NULL,
-    firstname VARCHAR(80), -- NOT NULL,
-    surname VARCHAR(80), -- NOT NULL,
-    gender VARCHAR(8), -- NOT NULL,
-    nationality VARCHAR(40), -- NOT NULL,
-    hometown VARCHAR(40), -- NOT NULL,
-    birthdate DATE, -- NOT NULL,
+    firstname VARCHAR(80),
+    surname VARCHAR(80),
     imageUrl VARCHAR(2048),
     userRole INT NOT NULL,
-    enabled BOOLEAN -- ?
-    -- ...other
+    enabled BOOLEAN
 );
 
 CREATE TABLE IF NOT EXISTS Student (
     uid VARCHAR(128) PRIMARY KEY REFERENCES S3User(uid),
-    matriculation VARCHAR(8) NOT NULL,
-    enrollment DATE NOT NULL,
+    matriculation VARCHAR(8) UNIQUE NOT NULL,
+    cdl VARCHAR(64) REFERENCES CDL(id),
+    curriculum VARCHAR(64),
     courseYear INT NOT NULL,
-    studyPlanId VARCHAR(8) NOT NULL
-    -- ...other
+	enrollment DATE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Teacher (
     uid VARCHAR(128) PRIMARY KEY REFERENCES S3User(uid),
     initialAvailability INT NOT NULL,
     appointment VARCHAR(1024)
-    -- ...other
 );
 
 CREATE TABLE IF NOT EXISTS TAStaff (
 	uid VARCHAR(128) PRIMARY KEY REFERENCES S3User(uid)
-    -- ...other
 );
 
 CREATE TABLE IF NOT EXISTS S3Admin (
 	uid VARCHAR(128) PRIMARY KEY REFERENCES S3User(uid)
-    -- ...other
+);
+
+
+
+-- SUBJECTS --
+CREATE TABLE IF NOT EXISTS S3Subject (
+    id VARCHAR(64) PRIMARY KEY,
+    title VARCHAR(80) NOT NULL,
+    cfu INT NOT NULL,
+    ssd VARCHAR(64) NOT NULL,
+    teacher VARCHAR(64), -- REFERENCES Teacher(uid),
+    subjectDescription TEXT
+);
+
+CREATE TABLE IF NOT EXISTS CDL (
+	id VARCHAR(64) PRIMARY KEY,
+    title VARCHAR(256) NOT NULL,
+    cdlType VARCHAR(64),
+    cdlDescription TEXT
+);
+
+CREATE TABLE IF NOT EXISTS Curriculum (
+	id VARCHAR(64) PRIMARY KEY,
+    cdl VARCHAR(64) REFERENCES CDL(id),
+    title VARCHAR(256) NOT NULL,
+    curDescription TEXT
+);
+
+CREATE TABLE IF NOT EXISTS SubjectCDL (
+    subjectId VARCHAR(64),
+    cdlId VARCHAR(64),
+    curriculumId VARCHAR(64),
+	academicYear VARCHAR(10) NOT NULL,
+	courseYear INT NOT NULL,
+    semester INT NOT NULL,
+    PRIMARY KEY (subjectId, cdlId, curriculumId),
+	FOREIGN KEY (subjectId) REFERENCES S3Subject(id),
+    FOREIGN KEY (cdlId) REFERENCES CDL(id),
+	FOREIGN KEY (curriculumId) REFERENCES Curriculum(id)
 );
 
 CREATE TABLE IF NOT EXISTS StudyPlan (
-    id VARCHAR(8) PRIMARY KEY,
-    title VARCHAR(80) NOT NULL,
-    courseCode VARCHAR(10) NOT NULL,
-    address VARCHAR(80),
-    calendarUrl VARCHAR(2048),
-    SPDescription TEXT,
-    createdBy VARCHAR(16) REFERENCES S3Admin(uid),
-    updatedBy VARCHAR(16) REFERENCES TAStaff(uid)
-    -- ...other
-);
-
-CREATE TABLE IF NOT EXISTS S3Subject (
-    id VARCHAR(8) NOT NULL, -- CAN WE USE THIS ONE AS ID ? IT MUST BE LINKED WITH STUDYPLAN ID TO BE UNIQUE?
-    studyPlanId VARCHAR(8) NOT NULL,
-    title VARCHAR(80) NOT NULL,
-    subjectYear INT NOT NULL,
-    cfu INT NOT NULL,
-    ssd VARCHAR(16) NOT NULL, -- studyPlanId or ssd ?
-    teacher VARCHAR(16) REFERENCES Teacher(uid),
-    subjectDescription TEXT,
-    -- createdAt,
-    -- createdBy,
-    PRIMARY KEY (id, studyPlanId)
-);
-
-CREATE TABLE IF NOT EXISTS Room (
-    id VARCHAR(16) PRIMARY KEY,
-    title VARCHAR(64) NOT NULL,
-    building VARCHAR(64) NOT NULL
-    -- others...
+    studentId VARCHAR(8),
+    subjectId VARCHAR(8),
+    createdAt DATETIME NOT NULL,
+    passedAt DATETIME,
+    grade INT,
+    PRIMARY KEY (studentId, subjectId),
+    FOREIGN KEY (studentId) REFERENCES Student(matriculation),
+    FOREIGN KEY (subjectId) REFERENCES S3Subject(id)
 );
 
 CREATE TABLE IF NOT EXISTS Evaluation (
-    studentId VARCHAR(7),
-    subjectId VARCHAR(8),
-    teacherRating INT NOT NULL,
-    subjectRating INT NOT NULL,
-    roomRating INT NOT NULL,
-    -- ... other rating
+    studentId VARCHAR(8),
+    subjectId VARCHAR(64),
+    rating INT NOT NULL,
     PRIMARY KEY (studentId, subjectId),
-    FOREIGN KEY (studentId) REFERENCES Student(uid),
+    FOREIGN KEY (studentId) REFERENCES Student(matriculation),
     FOREIGN KEY (subjectId) REFERENCES S3Subject(id)
 );
 
-CREATE TABLE IF NOT EXISTS StudentSubject (
-    studentId VARCHAR(7),
-    subjectId VARCHAR(8),
-    createdAt DATETIME NOT NULL,
-    passedAt DATE,
-    grade INT,
-    -- ... other
-    PRIMARY KEY (studentId, subjectId),
-    FOREIGN KEY (studentId) REFERENCES Student(uid) ON DELETE CASCADE,
-    FOREIGN KEY (subjectId) REFERENCES S3Subject(id)
-);
 
-CREATE TABLE IF NOT EXISTS Thesis (
-    id VARCHAR(16) NOT NULL,
-    title VARCHAR(80) NOT NULL,
-    tags TEXT,
-    thesisDescription TEXT,
-    -- cfu INT NOT NULL,
-    studyPlanId VARCHAR(8) NOT NULL,
-    teacher VARCHAR(16) REFERENCES Teacher(uid) ON DELETE CASCADE,
-    -- createdAt,
-    -- createdBy,
-    PRIMARY KEY (id, studyPlanId)
-);
 
-CREATE TABLE IF NOT EXISTS StudentThesis (
-    studentId VARCHAR(7),
-    thesisId VARCHAR(16),
-    createdAt DATETIME NOT NULL,
-    passedAt DATE,
-    PRIMARY KEY (studentId, thesisId),
-    FOREIGN KEY (studentId) REFERENCES Student(uid) ON DELETE CASCADE,
-    FOREIGN KEY (thesisId) REFERENCES Thesis(id)
-);
-
-CREATE TABLE IF NOT EXISTS StudyGroup (
-    id VARCHAR(16) PRIMARY KEY,
-    title VARCHAR(80),
-    topics VARCHAR(1024) NOT NULL,
-    createdBy VARCHAR(16) REFERENCES Student(uid) ON DELETE CASCADE,
-    createdAt DATETIME NOT NULL,
-    startAt DATETIME NOT NULL,
-    place VARCHAR(80),
-    deleted BOOLEAN NOT NULL
-    -- ... other
-);
-
-CREATE TABLE IF NOT EXISTS GroupParticipant (
-    studentId VARCHAR(7),
-    groupId VARCHAR(16),
-    PRIMARY KEY (studentId, groupId),
-    FOREIGN KEY (studentId) REFERENCES Student(uid) ON DELETE CASCADE,
-    FOREIGN KEY (groupId) REFERENCES StudyGroup(id) ON DELETE CASCADE
-);
-
+-- LESSONS --
 CREATE TABLE IF NOT EXISTS Lesson (
-    lessonId VARCHAR(30) NOT NULL,
+	id VARCHAR(64) PRIMARY KEY,
+    lessonId VARCHAR(32) NOT NULL,
     title VARCHAR(128) NOT NULL,
     startTime DATETIME NOT NULL,
     endTime DATETIME NOT NULL,
-    descAulaBreve VARCHAR(32),
-    oidAula INT,
-    academicYear VARCHAR(10) NOT NULL,
-    courseCode VARCHAR(8) NOT NULL,
-    courseYear VARCHAR(2) NOT NULL,
-    courseAddressCode VARCHAR(8) NOT NULL,
-    -- add something that references S3Subject
-    PRIMARY KEY (title, startTime, courseYear, courseAddressCode)
+    subjectCdlId VARCHAR(64) REFERENCES SubjectCDL(subjectId),
+    classroomId VARCHAR(64) REFERENCES Classroom(id)
 );
 
+CREATE TABLE IF NOT EXISTS Classroom (
+    id VARCHAR(64) PRIMARY KEY,
+    title VARCHAR(64) NOT NULL,
+    building VARCHAR(64) NOT NULL
+);
+
+
+
+-- PREFERENCES --
+CREATE TABLE IF NOT EXISTS Question (
+    id VARCHAR(64) PRIMARY KEY,
+    qDescription VARCHAR(512) NOT NULL,
+    minimumValue INT NOT NULL,
+    maximumValue INT NOT NULL,
+    qVisible BOOLEAN
+);
+
+CREATE TABLE IF NOT EXISTS StudentProfile (
+    studentId VARCHAR(8),
+    questionId VARCHAR(64),
+    answer INT NOT NULL,
+    PRIMARY KEY(studentId, questionId),
+	FOREIGN KEY (studentId) REFERENCES Student(matriculation),
+    FOREIGN KEY (questionId) REFERENCES Question(id)
+);
+
+
+
+-- THESIS --
+CREATE TABLE IF NOT EXISTS Thesis (
+    id VARCHAR(64) PRIMARY KEY,
+	teacher VARCHAR(64) REFERENCES Teacher(uid),
+    title VARCHAR(256) NOT NULL,
+    thesisDescription TEXT
+);
+
+CREATE TABLE IF NOT EXISTS Tag (
+    id VARCHAR(64) PRIMARY KEY,
+    title VARCHAR(256) NOT NULL,
+    tagDescription TEXT,
+    parentId VARCHAR(64)
+);
+
+CREATE TABLE IF NOT EXISTS ThesisTag (
+    thesisId VARCHAR(64),
+	tagId VARCHAR(64),
+	PRIMARY KEY (thesisId, tagId),
+    FOREIGN KEY (thesisId) REFERENCES Thesis(id),
+    FOREIGN KEY (tagId) REFERENCES Tag(id)
+);
+
+CREATE TABLE IF NOT EXISTS StudentThesis (
+    studentId VARCHAR(8) PRIMARY KEY,
+    thesisTitle VARCHAR(256),
+    createdAt DATETIME NOT NULL,
+    passedAt DATE,
+    FOREIGN KEY (studentId) REFERENCES Student(matriculation)
+);
+
+
+
+-- STUDY GROUP --
+CREATE TABLE IF NOT EXISTS StudyGroup (
+    id VARCHAR(64) PRIMARY KEY,
+    title VARCHAR(80),
+    topics VARCHAR(1024) NOT NULL,
+    createdBy VARCHAR(128) REFERENCES Student(uid),
+    createdAt DATETIME NOT NULL,
+    startAt DATETIME NOT NULL,
+    place VARCHAR(256),
+    deleted BOOLEAN NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS GroupParticipant (
+    studentId VARCHAR(128),
+    groupId VARCHAR(64),
+    PRIMARY KEY (studentId, groupId),
+    FOREIGN KEY (studentId) REFERENCES Student(uid),
+    FOREIGN KEY (groupId) REFERENCES StudyGroup(id)
+);
+
+
+
+-- NEWS AND ANNOUNCEMENTS --
 CREATE TABLE IF NOT EXISTS News (
     id VARCHAR(36) PRIMARY KEY,
     title VARCHAR(128) NOT NULL,
@@ -175,28 +211,57 @@ CREATE TABLE IF NOT EXISTS Announcement (
     link TEXT
 );
 
-CREATE TABLE IF NOT EXISTS Door (
-    id VARCHAR(16) PRIMARY KEY,
+
+
+-- DOOR OPENING --
+CREATE TABLE IF NOT EXISTS Place (
+    id VARCHAR(64) PRIMARY KEY,
     title VARCHAR(64) NOT NULL,
-    permissionLevel INT NOT NULL,
+    placeDescription VARCHAR(256),
     building VARCHAR(128),
+	permissionLevel INT NOT NULL,
     pushToken VARCHAR(256)
-    -- others...
 );
 
-CREATE TABLE IF NOT EXISTS DoorOpening (
-    userId VARCHAR(128) REFERENCES User(id),
-    doorId VARCHAR(64) NOT NULL REFERENCES Door(id),
+CREATE TABLE IF NOT EXISTS PlaceAuthorization (
+    userId VARCHAR(128),
+    placeId VARCHAR(64),
+    PRIMARY KEY(userId, placeId),
+	FOREIGN KEY (userId) REFERENCES S3User(uid),
+    FOREIGN KEY (placeId) REFERENCES Place(id)
+);
+
+CREATE TABLE IF NOT EXISTS PlaceToken (
+	otp VARCHAR(6) NOT NULL,
+    placeId VARCHAR(64) NOT NULL,
     createdAt TIMESTAMP NOT NULL,
-    otp VARCHAR(6) NOT NULL,
-    opened BOOLEAN NOT NULL,
-    openedAt TIMESTAMP,
-	PRIMARY KEY (doorId, createdAt)
+    expireAt TIMESTAMP NOT NULL,
+	createdBy VARCHAR(128) REFERENCES S3User(uid),
+    PRIMARY KEY (placeId, createdAt),
+    FOREIGN KEY (placeId) REFERENCES Place(id)
+);
+
+CREATE TABLE IF NOT EXISTS PlaceAccess (
+    id VARCHAR(64) PRIMARY KEY,
+    otp VARCHAR(6) NOT NULL REFERENCES PlaceToken(otp),
+    placeId VARCHAR(64) NOT NULL REFERENCES PlaceToken(placeId),
+	opened BOOLEAN NOT NULL,
+    createdAt TIMESTAMP NOT NULL
 );
 
 -- populating
-INSERT INTO Door VALUES('U300', 'Uffici Professori', 2, null, null);
-INSERT INTO Door VALUES('A320', 'A320', 1, null, null);
-INSERT INTO Door VALUES('A310', 'A310', 1,null, null);
-INSERT INTO Door VALUES('A220', 'A220', 1,null, null);
-INSERT INTO Door VALUES('A210', 'A210', 1,null, null);
+-- Places
+INSERT INTO Place VALUES('U300', 'Uffici Professori', null, null, 2, null);
+INSERT INTO Place VALUES('A320', 'A320',  null, null, 1, null);
+INSERT INTO Place VALUES('A310', 'A310',  null, null, 1, null);
+INSERT INTO Place VALUES('A220', 'A220',  null, null, 1, null);
+INSERT INTO Place VALUES('A210', 'A210',  null, null, 1, null);
+
+-- CDL
+INSERT INTO CDL VALUES('2035', 'Ingegneria Informatica', 'LM-32', 'Laurea Magistrale in Ingegneria Informatica (LM-32)');
+INSERT INTO Curriculum VALUES('796', '2035', 'Cybersicurezza', null);
+INSERT INTO Curriculum VALUES('797', '2035', 'Intelligenza Artificiale', null);
+
+
+
+-- populate subjects

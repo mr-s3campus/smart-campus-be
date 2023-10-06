@@ -12,27 +12,31 @@ router.post("/", async function (req, res, next) {
       startRange,
       endRange,
       academicYear, // 2023/2024
-      courseCode, // 2035
+      courseCode, // cdl: 2035
       courseYear,
-      courseAddressCode,
+      courseAddressCode, // curriculum
     } = req?.body;
 
     await withTransaction(db, async () => {
-      let sql =
-        "SELECT * FROM Lesson " +
-        "WHERE academicYear = ? " +
-        "AND courseCode = ? " +
-        "AND courseYear = ? " +
-        "AND courseAddressCode = ? " +
-        "AND startTime > ? " +
-        "AND endTime < ? " +
-        "ORDER BY startTime ASC; ";
+      let sql = `
+        SELECT L.id AS id, L.title AS title, L.startTime AS startTime, L.endTime AS endTime, C.title AS classroom, C.building AS building
+        FROM SubjectCDL S, Lesson L, Classroom C
+        WHERE S.subjectId = L.subjectCdlId
+        AND L.classroomId = C.id
+        AND cdlId = ?
+        AND courseYear = ?
+        AND curriculumId = ?
+        AND academicYear = ?
+        AND startTime > ?
+        AND endTime < ?
+        ORDER BY startTime ASC;
+      `;
       let results = await db
         .query(sql, [
-          academicYear,
           courseCode,
           courseYear,
           courseAddressCode,
+          academicYear,
           startRange,
           endRange,
         ])

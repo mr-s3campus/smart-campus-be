@@ -39,7 +39,7 @@ router.post("/signup", async function (req, res, next) {
 
     await withTransaction(db, async () => {
       let sql =
-        "INSERT INTO S3User VALUES(?,?,?,?, null, null, null, null, null, ?, true); ";
+        "INSERT INTO S3User VALUES(?,?,?,?, null, ?, true); ";
       let results = await db
         .query(sql, [uid, email, firstname, surname, userRole])
         .catch((err) => {

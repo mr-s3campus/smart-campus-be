@@ -1,20 +1,17 @@
-import moment from "moment";
-import config from "../../database/config.js";
-import { makeDb, withTransaction } from "../../database/middleware.js";
 import { spawn } from "child_process";
 
-const DATETIME_FORMAT = "YYYY-MM-DD HH:mm"
 export const writeTimetable = async function (
   date,
   academicYear,
-  courseCode,
+  cdl,
   courseYear,
-  address
+  curriculum
 ) {
   // format date: YYYY-MM-DD
   // academicYear: YYYY/YYYY
+  // cdl: '2035'
   // courseYear: '1' or '2'
-  // address: '796' or '797'
+  // curriculum: '796' or '797'
   try {
     // console.log(`writing timetables for ${date}`);
     const ls = spawn("python3", [
@@ -22,68 +19,45 @@ export const writeTimetable = async function (
       // params
       date,
       academicYear,
-      courseCode,
+      cdl,
       courseYear,
-      address,
+      curriculum,
     ]);
 
+    const exit = (data) => {
+      let parsed = JSON.parse(data);
+      let result = [];
+      if (parsed?.length > 0) {
+        result = parsed?.map((el) => ({
+          ...el,
+          date,
+          academicYear,
+          cdl,
+          courseYear,
+          curriculum,
+        }));
+      }
+      return result;
+    };
+
     let scriptOutput = "";
-
-    ls.stdout.on("data", async (scriptData) => {
-      scriptOutput = scriptOutput + scriptData;
+    for await (const chunk of ls.stdout) {
+      // console.log("stdout chunk: " + chunk);
+      scriptOutput += chunk;
+    }
+    let error = "";
+    for await (const chunk of ls.stderr) {
+      // console.error("stderr chunk: " + chunk);
+      error += chunk;
+    }
+    const exitCode = await new Promise((resolve, reject) => {
+      ls.on("close", resolve);
     });
 
-    ls.stderr.on("data", (data) => {
-      // console.log(`ERROR for ${date}:\n`);
-      console.log(`stderr: ${data}`);
-    });
-
-    ls.on("close", async (code) => {
-      let data = JSON.parse(scriptOutput);
-
-      // console.log(`TIMETABLE for ${date} DATA LENGTH: `, data?.length);
-      // console.log(data);
-
-      const db = await makeDb(config);
-
-      await withTransaction(db, async () => {
-        let singleQuery = "INSERT INTO Lesson VALUES (?,?,?,?,?,?,?,?,?,?); ";
-        let fullQuery = "";
-        let args = [];
-        data?.forEach((el) => {
-          fullQuery = fullQuery + singleQuery;
-          args.push(
-            el?.id,
-            el?.title,
-            moment(el?.start).format(DATETIME_FORMAT),
-            moment(el?.end).format(DATETIME_FORMAT),
-            el?.descAulaBreve,
-            el?.oidAula,
-            academicYear,
-            courseCode,
-            courseYear,
-            address
-          );
-        });
-
-        if (fullQuery?.length > 0) {
-          await db.query(fullQuery, args).catch((err) => {
-            if (err?.message?.split(":")[0] === "ER_DUP_ENTRY") {
-              // do nothing
-              // POSSIBLE ERROR: what if there is a duplicate before of a non-duplicate?
-              // it makes the error and the following queries are not executed.
-              // SOLUTION: it should never happen
-              // that a duplicate is followed by non-duplicates
-              // because it's always the same data (week plan),
-              // so or they are all duplicates or they are not
-            } else {
-              console.log(err);
-            }
-          });
-        }
-      });
-      // console.log(`timetable child process for date: ${date} exited with code ${code}`);
-    });
+    if (exitCode) {
+      throw new Error(`subprocess error exit ${exitCode}, ${error}`);
+    }
+    return exit(scriptOutput);
   } catch (err) {
     console.log(err);
   }

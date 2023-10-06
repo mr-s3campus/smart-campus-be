@@ -41,8 +41,8 @@ router.get("/", async function (req, res, next) {
       const db = await makeDb(config);
       await withTransaction(db, async () => {
         let sql =
-          "INSERT INTO DoorOpening VALUES (null, ?, UTC_TIMESTAMP(), ?, false, null); ";
-        await db.query(sql, [req?.query?.door, otp]).catch((err) => {
+          "INSERT INTO PlaceToken VALUES (?, ?, UTC_TIMESTAMP(), DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5' MINUTE), null); ";
+        await db.query(sql, [otp, req?.query?.door]).catch((err) => {
           throw err;
         });
 
@@ -74,30 +74,94 @@ router.post("/open", async function (req, res, next) {
       if (doorId && otp) {
         const db = await makeDb(config);
         await withTransaction(db, async () => {
-          let sql =
-            "UPDATE DoorOpening SET opened = true, userId = ?, openedAt = UTC_TIMESTAMP() " +
-            "WHERE doorId = ? " +
-            "AND otp = ? " +
-            "AND opened = false " +
-            "AND (SELECT permissionLevel FROM Door WHERE id = ? ) <= (SELECT userRole FROM S3User WHERE uid = ? ) = true " +
-            "AND DATE_ADD(createdAt, INTERVAL '5' MINUTE) > UTC_TIMESTAMP() ; " +
-            "SELECT pushToken FROM Door WHERE id = ? ; ";
-          let results = await db
-            .query(sql, [userId, doorId, otp, doorId, userId, doorId])
-            .catch((err) => {
-              throw err;
-            });
+          let sql = `
+            INSERT INTO PlaceAccess VALUES( 
+              UUID(), 
+              ?, 
+              ?,
+              EXISTS (SELECT * 
+              FROM PlaceToken 
+              WHERE otp = ?
+              AND placeId = ?
+              AND expireAt > UTC_TIMESTAMP())
+              
+              AND 
+              
+              (EXISTS (SELECT *
+              FROM S3User U, PlaceAuthorization PA
+              WHERE U.uid = PA.userId
+              AND U.uid = ?
+              AND PA.placeId = ? )
+            
+              OR 
+                
+              (SELECT P.permissionLevel <= U.userRole
+              FROM Place P, S3User U
+              WHERE U.uid = ?
+              AND p.id = ? )),
+              
+              UTC_TIMESTAMP()
+            ) ; 
 
-          if (results[0].affectedRows === 0) {
-            res.status(403).send();
-          } else {
-            const pushToken = results[1][0].pushToken;
+            SELECT (
+              EXISTS (SELECT * 
+              FROM PlaceToken 
+              WHERE otp = ?
+              AND placeId = ?
+              AND expireAt > UTC_TIMESTAMP())
+              
+              AND 
+              
+              (EXISTS (SELECT *
+              FROM S3User U, PlaceAuthorization PA
+              WHERE U.uid = PA.userId
+              AND U.uid = ?
+              AND PA.placeId = ? )
+            
+              OR 
+                
+              (SELECT P.permissionLevel <= U.userRole
+              FROM Place P, S3User U
+              WHERE U.uid = ?
+              AND p.id = ? ))
+            ) as opened ;
+
+            SELECT pushToken FROM Place WHERE id = ? ; 
+            `;
+          let values = [
+            // insert
+            otp,
+            doorId,
+            otp,
+            doorId,
+            userId,
+            doorId,
+            userId,
+            doorId,
+            // select
+            otp,
+            doorId,
+            userId,
+            doorId,
+            userId,
+            doorId,
+            // select
+            doorId,
+          ];
+          let results = await db.query(sql, values).catch((err) => {
+            throw err;
+          });
+
+          if (results[1][0]?.opened) {
+            const pushToken = results[2][0]?.pushToken;
             if (pushToken) {
               sendFCM(pushToken, doorId);
               res.status(200).send("door " + doorId + " opened successfully!");
             } else {
               res.status(500).send("can't contact the door!");
             }
+          } else {
+            res.status(403).send();
           }
         });
       } else {
@@ -118,12 +182,10 @@ router.post("/register", async function (req, res, next) {
         const { pushToken, doorId } = req.body;
         const db = await makeDb(config);
         await withTransaction(db, async () => {
-          let sql = "UPDATE Door SET pushToken = ? WHERE id = ? ;";
-          let results = await db
-            .query(sql, [pushToken, doorId])
-            .catch((err) => {
-              throw err;
-            });
+          let sql = "UPDATE Place SET pushToken = ? WHERE id = ? ;";
+          await db.query(sql, [pushToken, doorId]).catch((err) => {
+            throw err;
+          });
 
           res.status(200).send();
         });
