@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS S3User (
     surname VARCHAR(80),
     imageUrl VARCHAR(2048),
     userRole INT NOT NULL,
-    enabled BOOLEAN
+    enabled BOOLEAN,
+    push_token VARCHAR(1024)
 );
 
 CREATE TABLE IF NOT EXISTS Student (

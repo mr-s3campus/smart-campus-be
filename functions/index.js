@@ -7,7 +7,6 @@ import logger from "morgan";
 import bodyParser from "body-parser";
 import "dotenv/config";
 
-import usersRouter from "./routes/user.js";
 import timetableRouter from "./routes/timetable.js";
 import newsRouter from "./routes/news.js";
 import doorsRouter from "./routes/doors.js";
@@ -37,7 +36,6 @@ if (process.env.FUNCTIONS_EMULATOR) {
 
 console.log("ENVIRONMENT: ", process.env.FUNCTIONS_EMULATOR);
 
-app.use("/users", usersRouter);
 app.use("/timetable", timetableRouter);
 app.use("/news", newsRouter);
 app.use("/doors", doorsRouter);
