@@ -23,7 +23,7 @@ INSERT INTO PlaceAccess VALUES(
     
     (SELECT P.permissionLevel <= U.userRole
 	FROM Place P, S3User U
-	WHERE p.id = 'U300'
+	WHERE P.id = 'U300'
 	AND U.uid = 'jReCyUgcObTsn9zyvBcwBQi5gA23')),
     
     UTC_TIMESTAMP()

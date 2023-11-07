@@ -42,7 +42,8 @@ def getNews(index: int):
             for i in section.findChildren("p", {"class": "data-articolo"})
         ]
         fullContents = [
-            getNewsText.getNewsText(i["href"])
+            "" 
+            # getNewsText.getNewsText(i["href"]). IT TAKES TOO MUCH TIME and IT MAKES THE THING NOT WORK!
             for i in section.findChildren(attrs={"href": True})[5::]
         ]
         links = [
@@ -79,8 +80,6 @@ def getNews(index: int):
 
         return jsonArticles
     except ConnectionError:
-        # print("A connection error occurred: using local copy of file @ " + path)
-        # file = open(defaultPath, "r", encoding="utf8")
-        # articles = j.loads(file.read())
-        # file.close()
-        return jsonArticles
+        raise ConnectionError
+    except:
+        raise Exception

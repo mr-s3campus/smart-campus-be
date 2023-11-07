@@ -5,6 +5,7 @@ import os
 import constants
 import getLessons
 import cleanTimetable
+import sys
 
 
 def buildTimetable(date: str, aa: str, cc: str, aci: str, codInd: str):
@@ -33,6 +34,8 @@ def buildTimetable(date: str, aa: str, cc: str, aci: str, codInd: str):
 
         dateLessons = cleanTimetable.cleanTimetable(date, dateLessons, aci, codInd)
 
+        # print(dateLessons)
+
         return dateLessons
     except ConnectionError:
         # if connection error, I load the default file
@@ -44,3 +47,6 @@ def buildTimetable(date: str, aa: str, cc: str, aci: str, codInd: str):
         # if generic error, I load the updated local file
 
         raise Exception
+
+# buildTimetable(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4])
+

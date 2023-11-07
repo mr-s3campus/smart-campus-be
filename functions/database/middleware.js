@@ -9,6 +9,7 @@
 // da funzioni che non generano promise
 import mysql from "mysql";
 import util from "util";
+import promiseMysql from "promise-mysql";
 
 // Creiamo una funzione "factory"
 // questo design pattern è pensato per
@@ -19,7 +20,18 @@ export const makeDb = async function (config) {
   // creiamo il pool di connessione
   // per gestire efficientemente le richieste concorrenti
   // per una singola connessione si può usare createConnection
+
+  // let pool;
+  // if (process.env.FUNCTIONS_EMULATOR) {
+  //   pool = mysql.createPool(config);
+  // } else {
+  //   pool = promiseMysql.createPool(config);
+  // }
+
   let pool = mysql.createPool(config);
+
+  // let pool = await promiseMysql.createPool(config)
+
   // console.log("Pool created by configuration.");
 
   // Creiamo la versione asincrona di pool.getConnection

@@ -2,6 +2,7 @@ from requests import request
 from bs4 import BeautifulSoup
 import json as j
 import constants
+import sys
 
 
 def getLessons(aa: str, cc: str, aci: str, codInd: str):
@@ -41,8 +42,12 @@ def getLessons(aa: str, cc: str, aci: str, codInd: str):
             (str(str(a[eventsNumber].getText()).split("\n")[2]).split("= ")[1])[:-1]
         )["result"]
 
+        # print(lessons)
+
         return lessons
     except ConnectionError:
         raise ConnectionError
     except: 
         raise Exception
+
+# getLessons(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5])

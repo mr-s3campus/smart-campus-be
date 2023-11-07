@@ -17,7 +17,6 @@ const YEARS = ["1", "2"];
 
 const DATETIME_FORMAT = "YYYY-MM-DD HH:mm";
 
-
 export const makeTimetables = async function () {
   try {
     // current week
@@ -44,7 +43,7 @@ export const makeTimetables = async function () {
         SELECT id FROM S3Subject;
         SELECT subjectId FROM SubjectCDL;
         SELECT id FROM Classroom;
-        SELECT DISTINCT lessonId FROM Lesson;
+        SELECT id FROM Lesson;
       `;
       dbValues = await db1.query(sql, []).catch((err) => {
         console.log(err);
@@ -54,42 +53,68 @@ export const makeTimetables = async function () {
     const dbS3SubjectsIds = dbValues[0]?.map((el) => el?.id);
     const dbSubjectCDLIds = dbValues[1]?.map((el) => el?.subjectId);
     const dbClassroomsIds = dbValues[2]?.map((el) => el?.id);
-    const dbLessonsIds = dbValues[3]?.map((el) => el?.lessonId);
+    const dbLessonsIds = dbValues[3]?.map((el) => el?.id);
 
     let totalData = await Promise.all(promises); // totalData is an array of array of lesson-objects
     totalData = totalData?.flat();
 
     // s3subjects
-    const s3subjects = totalData?.map((el) => {
-      let splitTitle = el?.title?.split("-");
-      const toBeHashed = el?.title + el?.cdl + el?.curriculum;
-      const subjectId = createHash("md5").update(toBeHashed).digest("hex");
-      const s = {
-        id: subjectId, // 32 chars
-        title: el?.title?.split("(")[0]?.trim(),
-        cfu: parseInt(
-          el?.title.split("(")[1]?.split(")")[0]?.split(" ")[0]?.trim()
-        ),
-        ssd: "null", // FIX ME
-        teacher: splitTitle[splitTitle?.length - 1]?.trim(),
-        subjectDescription: el?.title,
-        // fields for subjectsCDL
-        cdl: el?.cdl,
-        curriculum: el?.curriculum,
-        academicYear: el?.academicYear,
-        courseYear: el?.courseYear,
-        // fields for lesson
-        lessonId: el?.id,
-        lessonTitle: el?.title,
-        startTime: moment(el?.start).format(DATETIME_FORMAT),
-        endTime: moment(el?.end).format(DATETIME_FORMAT),
-        subjectCdlId: subjectId,
-        classroomId: el?.oidAula,
-      };
-      return s;
-    });
+    const s3subjects = totalData
+      ?.map((el) => {
+        let splitTitle = el?.title?.split("-");
+        const toBeHashed = el?.title + el?.cdl + el?.curriculum;
+        const subjectId = createHash("md5").update(toBeHashed).digest("hex");
+        const lessonToBeHashed =
+          el?.title +
+          el?.cdl +
+          el?.curriculum +
+          el?.courseYear +
+          moment(el?.start).format(DATETIME_FORMAT) +
+          moment(el?.end).format(DATETIME_FORMAT);
+        const idLesson = createHash("md5")
+          .update(lessonToBeHashed)
+          .digest("hex");
+        const s = {
+          id: subjectId, // 32 chars
+          title: el?.title?.split("(")[0]?.trim(),
+          cfu: parseInt(
+            el?.title.split("(")[1]?.split(")")[0]?.split(" ")[0]?.trim()
+          ),
+          ssd: "null", // FIX ME
+          teacher: splitTitle[splitTitle?.length - 1]?.trim(),
+          subjectDescription: el?.title,
+          // fields for subjectsCDL
+          cdl: el?.cdl,
+          curriculum: el?.curriculum,
+          academicYear: el?.academicYear,
+          courseYear: el?.courseYear,
+          // fields for lesson
+          idLesson: idLesson,
+          lessonId: el?.id,
+          lessonTitle: el?.title,
+          startTime: moment(el?.start).format(DATETIME_FORMAT),
+          endTime: moment(el?.end).format(DATETIME_FORMAT),
+          subjectCdlId: subjectId,
+          classroomId: el?.oidAula,
+        };
+        return s;
+      })
+      .filter(
+        // because sometimes it receives dirty data with lasting-days lessons
+        (el) => {
+          let hours = moment
+            .duration(moment(el?.endTime).diff(moment(el?.startTime)))
+            .asHours();
+          if (hours > 0 && hours < 6) {
+            return true;
+          } else {
+            return false;
+          }
+        }
+      );
 
     const s3subjectsUniq = objectsUniq(s3subjects, "id");
+    const s3subjectsForLesson = objectsUniq(s3subjects, "idLesson");
 
     const db = await makeDb(config);
 
@@ -114,7 +139,7 @@ export const makeTimetables = async function () {
     totalArgs = totalArgs.concat(newClassrooms?.args);
 
     // lessons
-    const newLessons = makeLessons(s3subjects, dbLessonsIds);
+    const newLessons = makeLessons(s3subjectsForLesson, dbLessonsIds);
     fullQuery = fullQuery + newLessons?.fullQuery;
     totalArgs = totalArgs.concat(newLessons?.args);
 

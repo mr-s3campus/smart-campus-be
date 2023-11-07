@@ -5,6 +5,7 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
 import bodyParser from "body-parser";
+import "dotenv/config";
 
 import usersRouter from "./routes/user.js";
 import timetableRouter from "./routes/timetable.js";
@@ -16,6 +17,7 @@ import { initializeApp } from "firebase-admin/app";
 import { verifyToken } from "./middleware/authentication.js";
 import { makeTimetables } from "./python/timetable/makeTimetables.js";
 import { writeNews } from "./python/news/main.js";
+import { makeNews } from "./python/news/makeNews.js";
 
 const firebaseApp = initializeApp();
 
@@ -28,8 +30,10 @@ app.use(cookieParser());
 // app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.json());
 
-global.serverAddress = "http://10.0.2.2";
-global.app = app;
+if (process.env.FUNCTIONS_EMULATOR) {
+  global.serverAddress = "http://10.0.2.2";
+  global.app = app;
+}
 
 console.log("ENVIRONMENT: ", process.env.FUNCTIONS_EMULATOR);
 
@@ -57,11 +61,16 @@ app.get("/auth", async function (req, res, next) {
   }
 });
 
+// app.get("/myip", (req, res) => {
+//   fetch("https://7844-147-163-201-227.ngrok-free.app/receive");
+//   res.send("request sent!");
+// });
+
 const day = 86400000;
 makeTimetables();
-setInterval(() => makeTimetables(), 3 * day); // every 3 days
+setInterval(() => makeTimetables(), 2 * day); // every 3 days
 
-writeNews();
-setInterval(() => makeTimetables(), day / 2); // every 12 hours
+makeNews();
+setInterval(() => makeNews(), day / 2); // every 12 hours
 
 export const api = functions.https.onRequest(app);

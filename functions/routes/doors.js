@@ -33,7 +33,7 @@ const sendFCM = (token, doorId) => {
     });
 };
 
-/* GET */
+/* GET request to open */
 router.get("/", async function (req, res, next) {
   try {
     if (req?.query?.door) {
@@ -65,7 +65,7 @@ router.get("/", async function (req, res, next) {
   }
 });
 
-/* GET */
+/* POST open */
 router.post("/open", async function (req, res, next) {
   try {
     verifyToken(req, res, async () => {
@@ -98,7 +98,7 @@ router.post("/open", async function (req, res, next) {
               (SELECT P.permissionLevel <= U.userRole
               FROM Place P, S3User U
               WHERE U.uid = ?
-              AND p.id = ? )),
+              AND P.id = ? )),
               
               UTC_TIMESTAMP()
             ) ; 
@@ -123,7 +123,7 @@ router.post("/open", async function (req, res, next) {
               (SELECT P.permissionLevel <= U.userRole
               FROM Place P, S3User U
               WHERE U.uid = ?
-              AND p.id = ? ))
+              AND P.id = ? ))
             ) as opened ;
 
             SELECT pushToken FROM Place WHERE id = ? ; 
@@ -158,7 +158,7 @@ router.post("/open", async function (req, res, next) {
               sendFCM(pushToken, doorId);
               res.status(200).send("door " + doorId + " opened successfully!");
             } else {
-              res.status(500).send("can't contact the door!");
+              res.status(503).send("can't contact the door!");
             }
           } else {
             res.status(403).send();
@@ -174,7 +174,7 @@ router.post("/open", async function (req, res, next) {
   }
 });
 
-/* GET */
+/* POST register door and push token */
 router.post("/register", async function (req, res, next) {
   try {
     verifyToken(req, res, async () => {
@@ -192,6 +192,24 @@ router.post("/register", async function (req, res, next) {
       } else {
         res.status(401).send("user not authorized");
       }
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("internal error");
+  }
+});
+
+/* GET all doors */
+router.get("/all", async function (req, res, next) {
+  try {
+    const db = await makeDb(config);
+    await withTransaction(db, async () => {
+      let sql = "SELECT * FROM Place ORDER BY title DESC; ";
+      let results = await db.query(sql, []).catch((err) => {
+        throw err;
+      });
+
+      res.status(200).send(results);
     });
   } catch (err) {
     console.log(err);

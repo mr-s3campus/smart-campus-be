@@ -19,3 +19,7 @@ def getNewsText(link: str):
         return text
     except ReadTimeout:
         raise ConnectionError
+    except ConnectionError:
+        raise ConnectionError
+    except:
+        raise Exception

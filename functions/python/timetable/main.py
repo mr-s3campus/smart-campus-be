@@ -12,8 +12,6 @@ def main(date: str, aa: str, cc: str, aci: str, codInd: str):
     """
     try:
         result = buildTimetable.buildTimetable(date, aa, cc, aci, codInd)
-        # FIX ME: add params
-        # print(type(result))
         stringResult = j.dumps(result, ensure_ascii=False) # convert to string
         print(stringResult)
         return result
