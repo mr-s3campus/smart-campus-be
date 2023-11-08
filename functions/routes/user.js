@@ -39,7 +39,7 @@ router.post("/signup", async function (req, res, next) {
 
     await withTransaction(db, async () => {
       let sql = "INSERT INTO S3User VALUES(?,?,?,?, null, ?, true, null); ";
-      let results = await db
+      await db
         .query(sql, [uid, email, firstname, surname, userRole])
         .catch((err) => {
           if (err?.message?.split(":")[0] === "ER_DUP_ENTRY") {
@@ -49,7 +49,7 @@ router.post("/signup", async function (req, res, next) {
           }
         });
 
-      res.status(200).send(results);
+      res.status(200).send();
     });
   } catch (err) {
     res.status(500).send("internal error");

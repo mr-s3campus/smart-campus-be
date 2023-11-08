@@ -11,6 +11,7 @@ import timetableRouter from "./routes/timetable.js";
 import newsRouter from "./routes/news.js";
 import doorsRouter from "./routes/doors.js";
 import userRouter from "./routes/user.js";
+import notificationsRouter from "./routes/notifications.js";
 
 import { initializeApp } from "firebase-admin/app";
 import { verifyToken } from "./middleware/authentication.js";
@@ -40,6 +41,7 @@ app.use("/timetable", timetableRouter);
 app.use("/news", newsRouter);
 app.use("/doors", doorsRouter);
 app.use("/user", verifyToken, userRouter);
+app.use("/notifications", verifyToken, notificationsRouter);
 
 app.get("/test", (req, res) => {
   res.send("You did it!");
@@ -59,16 +61,16 @@ app.get("/auth", async function (req, res, next) {
   }
 });
 
-// app.get("/myip", (req, res) => {
-//   fetch("https://7844-147-163-201-227.ngrok-free.app/receive");
-//   res.send("request sent!");
-// });
-
 const day = 86400000;
-makeTimetables();
-setInterval(() => makeTimetables(), 2 * day); // every 3 days
 
-makeNews();
-setInterval(() => makeNews(), day / 2); // every 12 hours
+if (!process.env.FUNCTIONS_EMULATOR) {
+  makeTimetables();
+  setInterval(() => makeTimetables(), 2 * day); // every 3 days
+
+  makeNews();
+  setInterval(() => makeNews(), day / 2); // every 12 hours
+} else {
+  console.log("no news and timetable update in dev env");
+}
 
 export const api = functions.https.onRequest(app);

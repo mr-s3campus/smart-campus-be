@@ -18,6 +18,7 @@
     "cookie-parser": "^1.4.6",
     "debug": "^4.3.4",
     "dotenv": "^16.3.1",
+    "expo-server-sdk": "^3.7.0",
     "express": "^4.18.2",
     "firebase-admin": "^11.10.1",
     "firebase-functions": "^4.4.1",

@@ -250,6 +250,23 @@ CREATE TABLE IF NOT EXISTS PlaceAccess (
     createdAt TIMESTAMP NOT NULL
 );
 
+
+-- NOTIFICATION --
+CREATE TABLE IF NOT EXISTS Notification (
+	id VARCHAR(36) PRIMARY KEY,
+    sender_id VARCHAR(128) NOT NULL,
+    receiver_id VARCHAR(128) NOT NULL,
+    cdl_id VARCHAR(128),
+    curriculum_id VARCHAR(128),
+    subject_id VARCHAR(128),
+    title VARCHAR(256) NOT NULL,
+    body TEXT,
+    notification_type VARCHAR(30) NOT NULL,
+	createdAt TIMESTAMP NOT NULL,
+    FOREIGN KEY (sender_id) REFERENCES S3User(uid),
+    FOREIGN KEY (receiver_id) REFERENCES S3User(uid)
+);
+
 -- populating
 -- Places
 INSERT INTO Place VALUES('U300', 'Uffici Professori', null, null, 2, null);
